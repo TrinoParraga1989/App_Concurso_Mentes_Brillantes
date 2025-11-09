@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import re
 from difflib import SequenceMatcher
- 
+
 # ==============================================================================
 # BANCO DE 100 PREGUNTAS: FILOSOFÍA PARA MENTES BRILLANTES (1º BACHILLERATO)
 # TEMAS: Ética, Lógica, Identidad, Libre Albedrío, Política, Epistemología, 
