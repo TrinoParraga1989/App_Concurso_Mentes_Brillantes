@@ -9,11 +9,11 @@ from difflib import SequenceMatcher
 # Existencialismo, Filosofía de la Ciencia, Mente y Conciencia, Tiempo y Realidad.
 # ==============================================================================
 questions = [
-    {"q": "¿Cuál es la rama de la filosofía que estudia la acción humana en términos de lo que es correcto e incorrecto?",
+    {"q": "¿Cuál es la rama de la filosofía que estudia la acción humana en términos de lo que es correcto e incorrecto?",
      "a": "Ética (o Filosofía Moral)",
      "keywords": ["etica", "filosofia", "moral"],
      "context": "La Ética es la rama teórica que examina los fundamentos de la moralidad y la acción correcta."},
-    {"q": "¿Cuál es la diferencia principal entre un principio ético y una ley?",
+    {"q": "¿Cuál es la diferencia principal entre un principio ético y una ley?",
      "a": "Los principios éticos son reglas autoimpuestas o universales; las leyes son normas coercitivas impuestas por una autoridad estatal.",
      "keywords": ["autoimpuestas", "coercitivas", "normas", "leyes"],
      "context": "La Ética se enfoca en el deber interno, mientras que la ley se enfoca en la coerción externa."},
