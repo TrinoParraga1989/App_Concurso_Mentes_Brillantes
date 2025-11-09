@@ -592,6 +592,7 @@ preguntas_filosofia = [
      "keywords": ["hume", "critico", "causalidad", "conjuncion", "constante"],
      "context": "Hume puso en duda si la conexión entre causa y efecto es necesaria o simplemente un hábito mental."},
 ]
+]
 
 def is_correct(user_answer, keywords):
     """
