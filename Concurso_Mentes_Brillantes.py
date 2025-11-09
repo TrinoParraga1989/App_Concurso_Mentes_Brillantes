@@ -593,189 +593,145 @@ preguntas_filosofia = [
      "context": "Hume puso en duda si la conexión entre causa y efecto es necesaria o simplemente un hábito mental."},
 ]
 
-# This function checks if the user's answer is close to the
-correct one using a similarity ratio
-def
-is_correct(user_answer, keywords):
-    # Sanitize user input by removing
-punctuation, extra spaces, and converting to lowercase
-    user_answer = re.sub(r'[^\w\s]', '',
-user_answer).lower().strip()
-    
-    # Check for direct keyword matches
-    for keyword in keywords:
-        # Use re.search for more flexible matching
-(e.g., matching a keyword within a longer answer)
-        if re.search(r'\b' + re.escape(keyword) +
-r'\b', user_answer):
-            return True
- 
-        # Also check if the user's answer
-contains the keyword without strict word boundaries
-        if keyword in user_answer:
-            return True
- 
-    # If no direct match, calculate similarity
-ratio
-    # (Note: The original similarity logic is kept as
-a fallback, but keyword matching is prioritized for accuracy)
-    for keyword in keywords:
-        # Check for individual words in the
-user's answer
-        for user_word in user_answer.split():
-            # A similarity ratio of 0.85 or
-higher is considered a match
-            if SequenceMatcher(None, user_word,
-keyword).ratio() > 0.85:
-                return True
-    
-    return False
- 
-# Initialize
-session state for the quiz
-if
-"score" not in st.session_state:
-    st.session_state.score = 0
-if
-"current_question_index" not in st.session_state:
-    st.session_state.current_question_index = 0
-if
-"question_list" not in st.session_state:
-    st.session_state.question_list = []
-if
-"name_set" not in st.session_state:
-    st.session_state.name_set = False
-if
-"feedback" not in st.session_state:
-    st.session_state.feedback = None
-if
-"user_answer" not in st.session_state:
-    st.session_state.user_answer = ""
-if
-"quiz_started" not in st.session_state:
-    st.session_state.quiz_started = False
- 
+def is_correct(user_answer, keywords):
+    """
+    Verifica la respuesta del usuario.
+    Prioriza la coincidencia con palabras clave (keywords) o una alta similitud.
+    """
+    
+    # 1. Sanitizar la entrada del usuario (eliminar puntuación, espacios extra, minúsculas)
+    # Nota: Utiliza la función 'normalize_text' si la tienes definida para manejar acentos
+    user_answer_normalized = re.sub(r'[^\w\s]', '', user_answer).lower().strip()
+    
+    # 2. Verificar coincidencia directa o aproximada con palabras clave
+    for keyword in keywords:
+        # Intenta coincidir la palabra clave exacta como palabra completa
+        if re.search(r'\b' + re.escape(keyword.lower()) + r'\b', user_answer_normalized):
+            return True
+
+        # Como fallback, calcula la similitud de la respuesta completa con la palabra clave
+        # Esto ayuda si la respuesta del usuario es solo el sinónimo principal.
+        if SequenceMatcher(None, user_answer_normalized, keyword.lower()).ratio() > 0.85:
+            return True
+            
+        # Para respuestas largas: revisa las palabras clave dentro de las palabras de la respuesta
+        for user_word in user_answer_normalized.split():
+             if SequenceMatcher(None, user_word, keyword.lower()).ratio() > 0.90:
+                 return True
+
+    return False
+
+# ==============================================================================
+# 2. INICIALIZACIÓN Y FUNCIONES DEL QUIZ
+# ==============================================================================
+
+# Initialize session state for the quiz
+if "score" not in st.session_state:
+    st.session_state.score = 0
+if "current_question_index" not in st.session_state:
+    st.session_state.current_question_index = 0
+if "question_list" not in st.session_state:
+    st.session_state.question_list = []
+if "name_set" not in st.session_state:
+    st.session_state.name_set = False
+if "feedback" not in st.session_state:
+    st.session_state.feedback = None
+if "user_answer" not in st.session_state:
+    st.session_state.user_answer = ""
+if "quiz_started" not in st.session_state:
+    st.session_state.quiz_started = False
+
 # This function resets the quiz state
 def reset_quiz():
-    st.session_state.score = 0
-    st.session_state.current_question_index = 0
-    # Selecciona 20 preguntas al azar de un
-banco de 100
-    num_questions = min(20, len(questions))
-    st.session_state.question_list = random.sample(questions, num_questions)
-    st.session_state.feedback = None
-    st.session_state.user_answer = ""
-    st.session_state.quiz_started = True
-    st.rerun()
- 
+    st.session_state.score = 0
+    st.session_state.current_question_index = 0
+    
+    # Selecciona 20 preguntas al azar de un banco de 100
+    # NOTA: 'questions' DEBE SER LA LISTA COMPLETA DE TUS 100 PREGUNTAS
+    num_questions = min(20, len(questions))
+    st.session_state.question_list = random.sample(questions, num_questions)
+    
+    st.session_state.feedback = None
+    st.session_state.user_answer = ""
+    st.session_state.quiz_started = True
+    st.rerun()
+
+# ==============================================================================
+# 3. INTERFAZ DE USUARIO (MAIN LAYOUT)
+# ==============================================================================
+
 # Display the main title
-st.title("📝 Práctica Concurso - Filosofía
-para Mentes Brillantes")
- 
+st.title("📝 Práctica Concurso - Filosofía para Mentes Brillantes")
+
 # Get user's name
-if not
-st.session_state.name_set:
-    # Personalizamos el input con el nombre
-de la estudiante como referencia, aunque el código lo pida de nuevo.
-    name = st.text_input("¡Hola! Para
-empezar, por favor, dime tu nombre.")
-    if name:
-        st.session_state.name = name
-        st.session_state.name_set = True
-        st.session_state.quiz_started =
-False  # Reset quiz_started after setting
-the name
-        st.rerun()
+if not st.session_state.name_set:
+    # Personalizamos el input con el nombre de la estudiante como referencia, aunque el código lo pida de nuevo.
+    name = st.text_input("¡Hola! Para empezar, por favor, dime tu nombre.")
+    if name:
+        st.session_state.name = name
+        st.session_state.name_set = True
+        st.session_state.quiz_started = False # Reset quiz_started after setting the name
+        st.rerun()
 else:
-    name = st.session_state.name
-    # El mensaje de bienvenida ahora es más
-relevante.
-    st.subheader(f"¡Hola {name}! Empecemos
-con la preparación en Filosofía. ¡Ánimo, Analía! 📚")
- 
-    if not st.session_state.quiz_started:
-        st.info(f"Se seleccionarán
-**20 preguntas al azar** de un total de 100 en cada sesión de práctica.")
-        if st.button("Iniciar
-Práctica"):
-           reset_quiz()
-    else:
-        # Check if the
-quiz is finished
-       total_questions = len(st.session_state.question_list)
-        if st.session_state.current_question_index >=
-total_questions:
-            st.success(f"🎉
-¡Has completado la ronda! Tu puntaje es:
-{st.session_state.score}/{total_questions}")
-            if
-st.button("Empezar de Nuevo"):
-                st.session_state.quiz_started = False
-                st.rerun()
-        else:
-            # Display the current question
-            current_question =
-st.session_state.question_list[st.session_state.current_question_index]
- 
-            st.write(f"**Pregunta
-{st.session_state.current_question_index + 1}/{total_questions}:**
-{current_question['q']}")
-            
-            # Text input for the user's answer
-            # Use a unique key based on the
-index to ensure proper reset on "Siguiente"
-            user_answer =
-st.text_input("Tu respuesta:",
-value=st.session_state.get("user_answer", ""),
-key=f"answer_input_{st.session_state.current_question_index}")
- 
-            # Handle the "Responder" button
-            if st.button("Responder",
-key=f"btn_respond_{st.session_state.current_question_index}"):
-                if user_answer.strip() ==
-"":
-                    st.warning("Por favor,
-ingresa una respuesta antes de continuar.")
-                else:
-                    if is_correct(user_answer,
-current_question['keywords']):
-                        st.session_state.score
-+= 1
-                       st.session_state.feedback = "correct"
-                    else:
-                       st.session_state.feedback = "incorrect"
-                    
-                   st.session_state.user_answer = user_answer
-                    st.rerun()
- 
-            # Display
-feedback and the "Siguiente Pregunta" button
-            if
-st.session_state.get("feedback"):
-                if st.session_state.feedback ==
-"correct":
-                    st.success("✅¡Correcto! ¡Sigue
-así, Analía!")
-                else:
-                   st.error("❌ Incorrecto.
-¡Pero no te rindas!")
-                   st.write(f"La respuesta correcta era:
-**{current_question['a']}**")
-                   st.info(f"📖 **Para profundizar,
-puedes revisar:** {current_question['context']}")
- 
-                if
-st.button("Siguiente Pregunta",
-key=f"btn_next_{st.session_state.current_question_index}"):
-                    st.session_state.current_question_index +=
-1
-                    st.session_state.feedback =
-None
-                    # Clear the user answer
-state for the next question
-                   st.session_state.user_answer = "" 
-                    st.rerun()
- 
-            st.write("---")
-            st.write(f"### Puntaje actual:
-{st.session_state.score}/{st.session_state.current_question_index}")
+    name = st.session_state.name
+    # El mensaje de bienvenida ahora es más relevante.
+    st.subheader(f"¡Hola **{name}**! Empecemos con la preparación en Filosofía. ¡Ánimo, Analía! 📚")
+
+    if not st.session_state.quiz_started:
+        st.info(f"Se seleccionarán **20 preguntas al azar** de un total de 100 en cada sesión de práctica.")
+        if st.button("Iniciar Práctica"):
+            reset_quiz()
+    else:
+        # Check if the quiz is finished
+        total_questions = len(st.session_state.question_list)
+        if st.session_state.current_question_index >= total_questions:
+            st.success(f"🎉 ¡Has completado la ronda! Tu puntaje es: **{st.session_state.score}/{total_questions}**")
+            if st.button("Empezar de Nuevo"):
+                st.session_state.quiz_started = False
+                st.rerun()
+        else:
+            # Display the current question
+            current_question = st.session_state.question_list[st.session_state.current_question_index]
+
+            st.write(f"**Pregunta {st.session_state.current_question_index + 1}/{total_questions}:** {current_question['q']}")
+            
+            # Text input for the user's answer
+            # Use a unique key based on the index to ensure proper reset on "Siguiente"
+            user_answer = st.text_input("Tu respuesta:",
+                                        value=st.session_state.get("user_answer", ""),
+                                        key=f"answer_input_{st.session_state.current_question_index}")
+
+            # Handle the "Responder" button
+            if st.button("Responder", key=f"btn_respond_{st.session_state.current_question_index}"):
+                if user_answer.strip() == "":
+                    st.warning("Por favor, ingresa una respuesta antes de continuar.")
+                else:
+                    # NOTA: Asegúrate de que 'current_question' tenga el campo 'keywords'
+                    if 'keywords' in current_question and is_correct(user_answer, current_question['keywords']):
+                        st.session_state.score += 1
+                        st.session_state.feedback = "correct"
+                    else:
+                        st.session_state.feedback = "incorrect"
+                        
+                    st.session_state.user_answer = user_answer
+                    st.rerun()
+
+            # Display feedback and the "Siguiente Pregunta" button
+            if st.session_state.get("feedback"):
+                if st.session_state.feedback == "correct":
+                    st.success("✅ ¡Correcto! ¡Sigue así, Analía!")
+                else:
+                    st.error("❌ Incorrecto. ¡Pero no te rindas!")
+                    # NOTA: Asegúrate de que 'current_question' tenga los campos 'a' y 'context'
+                    st.write(f"La respuesta correcta era: **{current_question.get('a', 'N/A')}**")
+                    st.info(f"📖 **Para profundizar, puedes revisar:** {current_question.get('context', 'N/A')}")
+
+                if st.button("Siguiente Pregunta", key=f"btn_next_{st.session_state.current_question_index}"):
+                    st.session_state.current_question_index += 1
+                    st.session_state.feedback = None
+                    # Clear the user answer state for the next question
+                    st.session_state.user_answer = "" 
+                    st.rerun()
+
+            st.write("---")
+            st.write(f"### Puntaje actual: **{st.session_state.score}/{st.session_state.current_question_index}**")
